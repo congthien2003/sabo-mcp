@@ -1,16 +1,23 @@
 {
-  "name": "memorize-mcp",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^25.0.3"
-  },
-  "peerDependencies": {
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.1"
-  }
+	"name": "memorize-mcp",
+	"version": "1.0.0",
+	"description": "A minimal Model Context Protocol (MCP) server to persist work summaries as local JSON memories.",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "bun run index.ts",
+		"start": "bun run index.ts",
+		"lint": "echo \"No linter configured yet\""
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/node": "^25.0.3"
+	},
+	"peerDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.25.1"
+	}
 }

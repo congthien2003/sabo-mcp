@@ -9,7 +9,7 @@ import path from "path";
 import { env } from "process";
 
 // Đường dẫn lưu file - có thể tùy chỉnh qua biến môi trường
-const MEMORY_DIR = env.PROJECT_ROOT || "./.memories/data";
+const MEMORY_DIR = env.MEMORIZE_MCP_PROJECT_ROOT || "./.memories/data";
 
 // Đảm bảo thư mục tồn tại
 if (!fs.existsSync(MEMORY_DIR)) {
@@ -26,7 +26,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return {
 		tools: [
 			{
-				name: "save_summary",
+				name: "save_memorize",
 				description:
 					"Lưu bản tóm tắt nội dung công việc vào file local dưới dạng JSON",
 				inputSchema: {
@@ -60,9 +60,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		}`
 	);
 
-	if (request.params.name === "save_summary") {
+	if (request.params.name === "save_memorize") {
 		const { filename, topic, content } = request.params.arguments as any;
-		console.log(`[${new Date().toISOString()}] Processing save_summary:`, {
+		console.log(`[${new Date().toISOString()}] Processing save_memorize:`, {
 			filename,
 			topic,
 			contentLength: content?.length || 0,
