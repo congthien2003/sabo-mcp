@@ -1,6 +1,6 @@
 {
 	"name": "memorize-mcp",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "A minimal Model Context Protocol (MCP) server to persist work summaries as local JSON memories.",
 	"module": "index.ts",
 	"type": "module",

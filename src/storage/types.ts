@@ -58,3 +58,43 @@ export interface MemoryRecord {
 	created_at: string;
 	created_from?: string;
 }
+
+/**
+ * Options for syncing memories from cloud to local
+ */
+export interface SyncOptions {
+	projectSlug?: string;
+	overwrite?: boolean; // Default: true
+	filename?: string; // Optional: sync single file only
+}
+
+/**
+ * Sync action decision
+ */
+export type SyncDecision = {
+	action: "create" | "update" | "skip";
+	reason: string;
+};
+
+/**
+ * Stats for sync operation
+ */
+export interface SyncStats {
+	created: number;
+	updated: number;
+	skipped: number;
+	failed: number;
+	total: number;
+}
+
+/**
+ * Result of sync operation
+ */
+export interface SyncResult {
+	success: boolean;
+	stats: SyncStats;
+	memoryDir: string;
+	projectSlug: string;
+	errors?: string[];
+	message: string;
+}
