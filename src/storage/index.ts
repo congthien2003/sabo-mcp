@@ -6,18 +6,32 @@ import { saveLocalMemory } from "./local.js";
 import { saveSupabaseMemory } from "./supabase.js";
 import type { SaveMemoryOptions, SaveResult } from "./types.js";
 
-export { saveLocalMemory, ensureDirectoryExists } from "./local.js";
+export {
+	saveLocalMemory,
+	ensureDirectoryExists,
+	readLocalMemory,
+	listLocalMemories,
+	localMemoryExists,
+} from "./local.js";
 export {
 	isSupabaseConfigured as isSupabaseConfiguredDirect,
 	ensureProject,
 	saveSupabaseMemory,
+	getProjectBySlug,
+	getProjectMemories,
+	getMemoryByFilename,
 } from "./supabase.js";
+export { syncFromCloud, decideSyncAction } from "./sync.js";
 export type {
 	MemoryData,
 	SaveMemoryOptions,
 	SaveResult,
 	Project,
 	MemoryRecord,
+	SyncOptions,
+	SyncDecision,
+	SyncStats,
+	SyncResult,
 } from "./types.js";
 
 /**

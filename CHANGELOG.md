@@ -5,6 +5,36 @@ Tất cả thay đổi quan trọng của dự án này sẽ được ghi lại 
 Định dạng dựa theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 và version tuân theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-05
+
+### Added
+
+- **Sync from Cloud to Local**: Tool `sync_memorize` để đồng bộ memories từ Supabase về máy local.
+- Các Supabase query functions:
+  - `getProjectBySlug()`: Lấy thông tin project theo slug.
+  - `getProjectMemories()`: Lấy tất cả memories của project.
+  - `getMemoryByFilename()`: Lấy memory cụ thể theo filename.
+- Local storage read functions:
+  - `readLocalMemory()`: Đọc file JSON local.
+  - `listLocalMemories()`: List tất cả file JSON trong thư mục.
+  - `localMemoryExists()`: Kiểm tra file có tồn tại không.
+- Module `src/storage/sync.ts` với logic:
+  - `decideSyncAction()`: Quyết định create/update/skip dựa trên timestamp.
+  - `syncFromCloud()`: Orchestrator cho quá trình sync từ cloud.
+- Các TypeScript types mới: `SyncOptions`, `SyncResult`, `SyncDecision`, `SyncStats`.
+
+### Changed
+
+- Tool `sync_memorize` hỗ trợ các options:
+  - `projectSlug` (optional): Chỉ định project, mặc định lấy từ env.
+  - `overwrite` (optional): Force overwrite tất cả file local.
+  - `filename` (optional): Chỉ sync 1 file cụ thể.
+- Server version bump từ 1.1 → 1.2.
+
+### Fixed
+
+- N/A
+
 ## [1.1.0] - 2026-01-05
 
 ### Added

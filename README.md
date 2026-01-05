@@ -100,13 +100,16 @@ Cấu hình thật có thể khác tuỳ client MCP bạn đang dùng, nhưng ý
 - `args`: tham số để chạy file `index.ts`.
 - `env`: thiết lập `MEMORIZE_MCP_PROJECT_ROOT` nếu muốn thay đổi thư mục lưu.
 
-## Tool: `save_memorize`
+## Available Tools
 
-Server khai báo một tool duy nhất tên là `save_memorize`.
+Server cung cấp 2 tools độc lập:
+
+---
+
+## Tool 1: `save_memorize` (v1.0+)
 
 ### Mô tả
 
-- **Tên**: `save_memorize`
 - **Chức năng**: Lưu bản tóm tắt nội dung công việc vào file local dưới dạng JSON (và sync lên Supabase nếu được cấu hình).
 
 ### Input schema
@@ -148,16 +151,70 @@ Server khai báo một tool duy nhất tên là `save_memorize`.
 
 ```text
 ✅ Đã lưu tóm tắt vào: C:/path/to/your/memories/summary_v1.json
+☁️ Cloud sync: Thành công
 ```
 
 Nếu có lỗi ghi file, server trả về nội dung text với mô tả lỗi và `isError: true`.
+
+---
+
+## Tool 2: `sync_memorize` (v1.2+)
+
+### Mô tả
+
+- **Chức năng**: Đồng bộ memories từ Supabase Cloud về local storage. Chỉ cập nhật file nào có timestamp mới hơn trên cloud.
+
+### Input schema
+
+```json
+{
+	"type": "object",
+	"properties": {
+		"projectSlug": {
+			"type": "string",
+			"description": "(Optional) Slug của project để sync. Nếu không có sẽ dùng MEMORIZE_MCP_PROJECT_SLUG từ env."
+		},
+		"overwrite": {
+			"type": "boolean",
+			"description": "(Optional) Bắt buộc ghi đè tất cả file local, bỏ qua kiểm tra timestamp. Mặc định: false"
+		},
+		"filename": {
+			"type": "string",
+			"description": "(Optional) Chỉ sync file cụ thể thay vì tất cả memories"
+		}
+	},
+	"required": []
+}
+```
+
+### Quy trình hoạt động
+
+1. Client gọi tool `sync_memorize`.
+2. Server kiểm tra Supabase configuration.
+3. Fetch tất cả memories từ cloud cho project (hoặc chỉ 1 file nếu có `filename`).
+4. Với mỗi memory:
+   - Nếu file local không tồn tại → **Create**
+   - Nếu `overwrite=true` → **Update** (ghi đè)
+   - Nếu cloud timestamp > local timestamp → **Update**
+   - Ngược lại → **Skip**
+5. Trả về kết quả với statistics:
+
+```text
+✅ Sync completed: 3 created, 2 updated, 5 skipped
+
+📊 Statistics:
+  ➕ Created: 3
+  🔄 Updated: 2
+  ⏭️  Skipped: 5
+```
 
 ## Logging
 
 Server in log ra console mỗi khi:
 
-- Nhận request gọi tool (`Received tool request: save_memorize`).
-- Bắt đầu xử lý `save_memorize` với thông tin `filename`, `topic`, `contentLength`.
+- Nhận request gọi tool (`Received tool request: save_memorize` hoặc `sync_memorize`).
+- Bắt đầu xử lý tool với thông tin parameters.
+- Sync process: log từng file được created/updated/skipped.
 - Ghi file thành công hoặc báo lỗi.
 
 Log này hữu ích để debug khi tích hợp với client MCP.
@@ -165,10 +222,13 @@ Log này hữu ích để debug khi tích hợp với client MCP.
 ## Tóm tắt (bản rút gọn)
 
 - Đây là một MCP server nhỏ, chạy bằng Bun, dùng stdio.
-- Server cung cấp tool `save_memorize` để lưu tóm tắt vào file JSON.
+- Server cung cấp 2 tools:
+  - `save_memorize`: Lưu memory mới (local + cloud)
+  - `sync_memorize`: Đồng bộ memories từ cloud về local
 - Thư mục lưu được cấu hình bởi `MEMORIZE_MCP_PROJECT_ROOT`, mặc định `.memories/data`.
 - Phù hợp để dùng như "bộ nhớ ngoài" cho các phiên làm việc với AI/LLM.
 - **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
+- **V1.2+**: Hỗ trợ sync memories từ Supabase Cloud về local storage.
 
 ---
 

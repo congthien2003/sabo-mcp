@@ -4,13 +4,13 @@ import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { saveMemory } from "./src/storage/index.js";
+import { saveMemory, syncFromCloud } from "./src/storage/index.js";
 import { getConfig } from "./src/config.js";
 
 const config = getConfig();
 
 const server = new Server(
-	{ name: "memorize-mcp-server", version: "1.1.0" },
+	{ name: "memorize-mcp-server", version: "1.2.0" },
 	{ capabilities: { tools: {} } }
 );
 
@@ -44,6 +44,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 						},
 					},
 					required: ["filename", "topic", "content"],
+				},
+			},
+			{
+				name: "sync_memorize",
+				description:
+					"Đồng bộ memories từ Supabase Cloud về local storage. Kiểm tra timestamp và chỉ cập nhật file nào mới hơn trên cloud.",
+				inputSchema: {
+					type: "object",
+					properties: {
+						projectSlug: {
+							type: "string",
+							description:
+								"(Optional) Slug của project để sync. Nếu không có sẽ dùng MEMORIZE_MCP_PROJECT_SLUG từ env.",
+						},
+						overwrite: {
+							type: "boolean",
+							description:
+								"(Optional) Bắt buộc ghi đè tất cả file local, bỏ qua kiểm tra timestamp. Mặc định: false",
+						},
+						filename: {
+							type: "string",
+							description:
+								"(Optional) Chỉ sync file cụ thể thay vì tất cả memories",
+						},
+					},
+					required: [],
 				},
 			},
 		],
@@ -108,6 +134,60 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		}
 	}
 
+	if (request.params.name === "sync_memorize") {
+		const { projectSlug, overwrite, filename } = request.params
+			.arguments as any;
+
+		console.log(`[${new Date().toISOString()}] Processing sync_memorize:`, {
+			projectSlug: projectSlug || "(from env)",
+			overwrite: overwrite || false,
+			filename: filename || "(all files)",
+		});
+
+		try {
+			const result = await syncFromCloud({
+				projectSlug,
+				overwrite,
+				filename,
+			});
+
+			// Build response message
+			let message = result.success ? "✅ " : "❌ ";
+			message += result.message;
+
+			if (result.stats) {
+				message += `\n\n📊 Statistics:`;
+				if (result.stats.created > 0)
+					message += `\n  ➕ Created: ${result.stats.created}`;
+				if (result.stats.updated > 0)
+					message += `\n  🔄 Updated: ${result.stats.updated}`;
+				if (result.stats.skipped > 0)
+					message += `\n  ⏭️  Skipped: ${result.stats.skipped}`;
+				if (result.stats.failed > 0)
+					message += `\n  ❌ Failed: ${result.stats.failed}`;
+			}
+
+			return {
+				content: [{ type: "text", text: message }],
+				isError: !result.success,
+			};
+		} catch (error: any) {
+			console.error(
+				`[${new Date().toISOString()}] ❌ Error in sync_memorize:`,
+				error
+			);
+			return {
+				content: [
+					{
+						type: "text",
+						text: `❌ Lỗi: ${error.message || String(error)}`,
+					},
+				],
+				isError: true,
+			};
+		}
+	}
+
 	console.warn(
 		`[${new Date().toISOString()}] ⚠️ Unknown tool requested: ${
 			request.params.name
@@ -120,7 +200,7 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.log("=".repeat(50));
-console.log("🚀 Memorize MCP Server v1.1 Started");
+console.log("🚀 Memorize MCP Server v1.2 Started");
 console.log(`📁 Memory Directory: ${config.memoryDir}`);
 console.log(
 	`☁️  Supabase: ${

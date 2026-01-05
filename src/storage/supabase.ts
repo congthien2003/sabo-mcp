@@ -4,7 +4,7 @@
  */
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { Config } from "../config.js";
-import type { SaveMemoryOptions, Project } from "./types.js";
+import type { SaveMemoryOptions, Project, MemoryRecord } from "./types.js";
 
 let supabaseClient: SupabaseClient | null = null;
 
@@ -170,5 +170,166 @@ export async function saveSupabaseMemory(
 			error
 		);
 		return false;
+	}
+}
+
+/**
+ * Get project by slug
+ * @param projectSlug - Unique slug for the project
+ * @param config - Configuration object
+ * @returns Project object or null if not found
+ */
+export async function getProjectBySlug(
+	projectSlug: string,
+	config: Config
+): Promise<Project | null> {
+	const client = getSupabaseClient(config);
+	if (!client) {
+		console.warn("[Supabase] Client not configured");
+		return null;
+	}
+
+	try {
+		const { data, error } = await client
+			.from("projects")
+			.select("*")
+			.eq("slug", projectSlug)
+			.single();
+
+		if (error) {
+			if (error.code === "PGRST116") {
+				// No rows returned
+				console.log(
+					`[${new Date().toISOString()}] Project not found: ${projectSlug}`
+				);
+				return null;
+			}
+			console.error(
+				`[${new Date().toISOString()}] Error fetching project:`,
+				error
+			);
+			return null;
+		}
+
+		return data as Project;
+	} catch (error) {
+		console.error(
+			`[${new Date().toISOString()}] Exception in getProjectBySlug:`,
+			error
+		);
+		return null;
+	}
+}
+
+/**
+ * Get all memories for a project
+ * @param projectSlug - Unique slug for the project
+ * @param config - Configuration object
+ * @returns Array of memory records
+ */
+export async function getProjectMemories(
+	projectSlug: string,
+	config: Config
+): Promise<MemoryRecord[]> {
+	const client = getSupabaseClient(config);
+	if (!client) {
+		console.warn("[Supabase] Client not configured");
+		return [];
+	}
+
+	try {
+		// First get project ID
+		const project = await getProjectBySlug(projectSlug, config);
+		if (!project) {
+			console.log(
+				`[${new Date().toISOString()}] Project not found, no memories to fetch`
+			);
+			return [];
+		}
+
+		// Fetch all memories for this project
+		const { data, error } = await client
+			.from("memories")
+			.select("*")
+			.eq("project_id", project.id)
+			.order("timestamp", { ascending: false });
+
+		if (error) {
+			console.error(
+				`[${new Date().toISOString()}] Error fetching memories:`,
+				error
+			);
+			return [];
+		}
+
+		console.log(
+			`[${new Date().toISOString()}] Fetched ${
+				data.length
+			} memories for project: ${projectSlug}`
+		);
+		return data as MemoryRecord[];
+	} catch (error) {
+		console.error(
+			`[${new Date().toISOString()}] Exception in getProjectMemories:`,
+			error
+		);
+		return [];
+	}
+}
+
+/**
+ * Get a single memory by filename
+ * @param projectSlug - Unique slug for the project
+ * @param filename - Filename to search for
+ * @param config - Configuration object
+ * @returns Memory record or null if not found
+ */
+export async function getMemoryByFilename(
+	projectSlug: string,
+	filename: string,
+	config: Config
+): Promise<MemoryRecord | null> {
+	const client = getSupabaseClient(config);
+	if (!client) {
+		console.warn("[Supabase] Client not configured");
+		return null;
+	}
+
+	try {
+		// First get project ID
+		const project = await getProjectBySlug(projectSlug, config);
+		if (!project) {
+			return null;
+		}
+
+		// Fetch memory by filename
+		const { data, error } = await client
+			.from("memories")
+			.select("*")
+			.eq("project_id", project.id)
+			.eq("filename", filename)
+			.order("timestamp", { ascending: false })
+			.limit(1)
+			.single();
+
+		if (error) {
+			if (error.code === "PGRST116") {
+				// No rows returned
+				return null;
+			}
+			console.error(
+				`[${new Date().toISOString()}] Error fetching memory:`,
+				error
+			);
+			return null;
+		}
+
+		return data as MemoryRecord;
+	} catch (error) {
+		console.error(
+			`[${new Date().toISOString()}] Exception in getMemoryByFilename:`,
+			error
+		);
+		return null;
 	}
 }
