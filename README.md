@@ -5,8 +5,9 @@
 - MCP server đơn giản dùng để lưu trữ bản tóm tắt nội dung công việc ra file JSON trên máy local.
 - Cung cấp 1 tool duy nhất: `save_memorize` – nhận `filename`, `topic`, `content` và ghi thành file JSON.
 - Thư mục lưu trữ mặc định: `./.memories/data` (có thể thay đổi qua biến môi trường `MEMORIZE_MCP_PROJECT_ROOT`).
+- **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
 
-**Phiên bản hiện tại**: `1.0.0` – xem chi tiết trong `CHANGELOG.md`.
+**Phiên bản hiện tại**: `1.1.0` – xem chi tiết trong `CHANGELOG.md`.
 
 ---
 
@@ -106,32 +107,29 @@ Server khai báo một tool duy nhất tên là `save_memorize`.
 ### Mô tả
 
 - **Tên**: `save_memorize`
-- **Chức năng**: Lưu bản tóm tắt nội dung công việc vào file local dưới dạng JSON.
+- **Chức năng**: Lưu bản tóm tắt nội dung công việc vào file local dưới dạng JSON (và sync lên Supabase nếu được cấu hình).
 
 ### Input schema
 
-```json
+````json
 {
-	"type": "object",
-	"properties": {
-		"filename": {
-			"type": "string",
-			"description": "Tên file (vd: summary_v1.json)"
-		},
-		"topic": {
-			"type": "string",
-			"description": "Chủ đề chính của phiên làm việc"
-		},
-		"content": {
-			"type": "string",
-			"description": "Nội dung tóm tắt chi tiết"
-		}
-	},
-	"required": ["filename", "topic", "content"]
-}
-```
-
-### Cách hoạt động
+  "type": "object",
+  "properties": {
+    "filename": {
+      "type": "string",
+      "description": "Tên file (vd: summary_v1.json)"
+    },
+    "topic": {
+      "type": "string",
+      "description": "Chủ đề chính của phiên làm việc"
+    },
+    "content": {
+      "type": "string",
+      "description": "Nội dung tóm tắt chi tiết"
+    },
+    "projectSlug": {
+      "type": "string",
+      "description": "(Optional, v1.1+) Slug của project để sync lên Supabase"
 
 1. MCP client gọi tool `save_memorize` với 3 tham số: `filename`, `topic`, `content`.
 2. Server tạo đường dẫn file: `filePath = path.join(MEMORY_DIR, filename)`.
@@ -144,7 +142,7 @@ Server khai báo một tool duy nhất tên là `save_memorize`.
 	"content": "Nội dung tóm tắt chi tiết...",
 	"createdAt": "05/01/2026, 21:23:45"
 }
-```
+````
 
 4. Nếu thành công, server trả về một message dạng text, ví dụ:
 
@@ -170,6 +168,88 @@ Log này hữu ích để debug khi tích hợp với client MCP.
 - Server cung cấp tool `save_memorize` để lưu tóm tắt vào file JSON.
 - Thư mục lưu được cấu hình bởi `MEMORIZE_MCP_PROJECT_ROOT`, mặc định `.memories/data`.
 - Phù hợp để dùng như "bộ nhớ ngoài" cho các phiên làm việc với AI/LLM.
+- **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
+
+---
+
+## Cloud Sync với Supabase (v1.1+)
+
+### Giới thiệu
+
+Từ phiên bản 1.1, memorize-mcp hỗ trợ đồng bộ memory lên Supabase Cloud. Điều này cho phép:
+
+- Chia sẻ memory giữa nhiều máy tính.
+- Backup tự động lên cloud.
+- Query và visualize memory từ Supabase dashboard.
+
+### Setup Supabase
+
+1. **Tạo Supabase project** tại [supabase.com](https://supabase.com)
+
+2. **Chạy migration SQL** từ file `docs/version1.1/migrations/001_initial_schema.sql`:
+
+   - Vào Supabase Dashboard → SQL Editor
+   - Copy nội dung file SQL và chạy
+   - Kiểm tra 2 bảng `projects` và `memories` đã được tạo
+
+3. **Lấy credentials**:
+
+   - URL: Settings → API → Project URL
+   - Service Role Key: Settings → API → `service_role` key (secret)
+
+4. **Cấu hình environment variables**:
+
+```bash
+# Local testing
+export MEMORIZE_MCP_SUPABASE_URL="https://xxx.supabase.co"
+export MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+export MEMORIZE_MCP_PROJECT_SLUG="my-project"
+```
+
+Hoặc trong MCP client config (ví dụ Claude Desktop):
+
+```jsonc
+{
+	"mcpServers": {
+		"memorize-mcp": {
+			"command": "bun",
+			"args": ["run", "index.ts"],
+			"env": {
+				"MEMORIZE_MCP_PROJECT_ROOT": "C:/memories",
+				"MEMORIZE_MCP_SUPABASE_URL": "https://xxx.supabase.co",
+				"MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY": "your-key",
+				"MEMORIZE_MCP_PROJECT_SLUG": "my-project"
+			}
+		}
+	}
+}
+```
+
+### Cách hoạt động
+
+- Mỗi lần gọi `save_memorize`:
+
+  1. Luôn lưu file JSON local trước (offline-first).
+  2. Nếu Supabase được cấu hình → sync thêm lên cloud.
+  3. Nếu cloud sync thất bại → local vẫn thành công (graceful degradation).
+
+- Response message sẽ báo status của cả local và cloud:
+  ```
+  ✅ Đã lưu tóm tắt vào: /path/to/file.json
+  ☁️ Cloud sync: Thành công
+  ```
+
+### Sync giữa nhiều máy
+
+- Tất cả máy cần cùng:
+
+  - `MEMORIZE_MCP_SUPABASE_URL`
+  - `MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY`
+  - `MEMORIZE_MCP_PROJECT_SLUG` (để ghi vào cùng project)
+
+- Mỗi memory được lưu với `created_from` (hostname@username) để biết nguồn gốc.
+
+Xem thêm chi tiết tại: `docs/version1.1/overview.md`
 
 ---
 
