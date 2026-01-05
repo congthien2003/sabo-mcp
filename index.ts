@@ -4,20 +4,13 @@ import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import fs from "fs";
-import path from "path";
-import { env } from "process";
+import { saveMemory } from "./src/storage/index.js";
+import { getConfig } from "./src/config.js";
 
-// Đường dẫn lưu file - có thể tùy chỉnh qua biến môi trường
-const MEMORY_DIR = env.MEMORIZE_MCP_PROJECT_ROOT || "./.memories/data";
-
-// Đảm bảo thư mục tồn tại
-if (!fs.existsSync(MEMORY_DIR)) {
-	fs.mkdirSync(MEMORY_DIR);
-}
+const config = getConfig();
 
 const server = new Server(
-	{ name: "memory-server", version: "1.0.0" },
+	{ name: "memorize-mcp-server", version: "1.1.0" },
 	{ capabilities: { tools: {} } }
 );
 
@@ -28,7 +21,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 			{
 				name: "save_memorize",
 				description:
-					"Lưu bản tóm tắt nội dung công việc vào file local dưới dạng JSON",
+					"Lưu bản tóm tắt nội dung công việc vào file local dưới dạng JSON (có thể sync lên Supabase Cloud)",
 				inputSchema: {
 					type: "object",
 					properties: {
@@ -43,6 +36,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 						content: {
 							type: "string",
 							description: "Nội dung tóm tắt chi tiết",
+						},
+						projectSlug: {
+							type: "string",
+							description:
+								"(Optional) Slug của project để sync lên Supabase. Nếu không có sẽ dùng MEMORIZE_MCP_PROJECT_SLUG từ env.",
 						},
 					},
 					required: ["filename", "topic", "content"],
@@ -61,39 +59,50 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	);
 
 	if (request.params.name === "save_memorize") {
-		const { filename, topic, content } = request.params.arguments as any;
+		const { filename, topic, content, projectSlug } = request.params
+			.arguments as any;
+
 		console.log(`[${new Date().toISOString()}] Processing save_memorize:`, {
 			filename,
 			topic,
+			projectSlug: projectSlug || "(from env)",
 			contentLength: content?.length || 0,
 		});
 
-		const filePath = path.join(MEMORY_DIR, filename);
-
-		const dataToSave = {
-			topic: topic,
-			timestamp: new Date().toISOString(),
-			content: content,
-			createdAt: new Date().toLocaleString("vi-VN"),
-		};
-
 		try {
-			// Ghi file dưới dạng JSON
-			fs.writeFileSync(filePath, JSON.stringify(dataToSave, null, 2), "utf8");
-			console.log(
-				`[${new Date().toISOString()}] ✅ Successfully saved file: ${filePath}`
-			);
+			const result = await saveMemory({
+				filename,
+				topic,
+				content,
+				projectSlug,
+			});
+
+			// Build response message
+			let message = `✅ Đã lưu tóm tắt vào: ${result.localPath}`;
+
+			if (result.cloudSynced) {
+				message += `\n☁️ Cloud sync: Thành công`;
+			} else if (result.cloudError) {
+				message += `\n⚠️ Cloud sync: Thất bại (${result.cloudError})`;
+			} else {
+				message += `\n📍 Cloud sync: Không được cấu hình`;
+			}
 
 			return {
-				content: [{ type: "text", text: `✅ Đã lưu tóm tắt vào: ${filePath}` }],
+				content: [{ type: "text", text: message }],
 			};
 		} catch (error: any) {
 			console.error(
-				`[${new Date().toISOString()}] ❌ Error saving file:`,
+				`[${new Date().toISOString()}] ❌ Error in save_memorize:`,
 				error
 			);
 			return {
-				content: [{ type: "text", text: `❌ Lỗi ghi file: ${error.message}` }],
+				content: [
+					{
+						type: "text",
+						text: `❌ Lỗi: ${error.message || String(error)}`,
+					},
+				],
 				isError: true,
 			};
 		}
@@ -111,7 +120,12 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.log("=".repeat(50));
-console.log("🚀 Memory MCP Server Started");
-console.log(`📁 Memory Directory: ${MEMORY_DIR}`);
+console.log("🚀 Memorize MCP Server v1.1 Started");
+console.log(`📁 Memory Directory: ${config.memoryDir}`);
+console.log(
+	`☁️  Supabase: ${
+		config.supabase.url ? "Configured ✓" : "Not configured (local-only)"
+	}`
+);
 console.log(`⏰ Started at: ${new Date().toLocaleString("vi-VN")}`);
 console.log("=".repeat(50));
