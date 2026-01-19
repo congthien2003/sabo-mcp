@@ -46,7 +46,21 @@ async function listLocalWorkflows(): Promise<string[]> {
  */
 async function readLocalWorkflow(filename: string): Promise<string> {
 	const workflowsDir = getLocalWorkflowsDir();
-	const filePath = path.join(workflowsDir, filename);
+	// Sanitize the filename to prevent path traversal
+	const safeFilename = path.basename(filename);
+	if (safeFilename !== filename) {
+		throw new Error(`Invalid workflow filename: ${filename}`);
+	}
+	const resolvedWorkflowsDir = path.resolve(workflowsDir);
+	const filePath = path.resolve(resolvedWorkflowsDir, safeFilename);
+	// Ensure the resolved path is still within the workflows directory
+	const workflowsDirWithSep =
+		resolvedWorkflowsDir.endsWith(path.sep)
+			? resolvedWorkflowsDir
+			: resolvedWorkflowsDir + path.sep;
+	if (!filePath.startsWith(workflowsDirWithSep)) {
+		throw new Error(`Invalid workflow path: ${filename}`);
+	}
 
 	try {
 		return await fs.readFile(filePath, "utf-8");
