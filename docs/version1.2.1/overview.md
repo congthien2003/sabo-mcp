@@ -37,25 +37,22 @@ MEMORIZE_MCP_WORKFLOWS_SOURCE=https://...
 
 ```javascript
 // Pull tất cả workflows
-mcp_project - memor_pull_workflows({});
+mcp_project.memor_pull_workflows({});
 
 // Pull và overwrite
-mcp_project -
-	memor_pull_workflows({
-		overwrite: true,
-	});
+mcp_project.memor_pull_workflows({
+	overwrite: true,
+});
 
 // Pull một file cụ thể
-mcp_project -
-	memor_pull_workflows({
-		filename: "SAVE_MEMORY.md",
-	});
+mcp_project.memor_pull_workflows({
+	filename: "SAVE_MEMORY.md",
+});
 
 // Pull về folder cụ thể (override env)
-mcp_project -
-	memor_pull_workflows({
-		targetDir: "/custom/path/to/project",
-	});
+mcp_project.memor_pull_workflows({
+	targetDir: "/custom/path/to/project",
+});
 ```
 
 ### 3. Kết quả
