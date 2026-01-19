@@ -122,7 +122,7 @@ export MEMORIZE_MCP_TARGET_PROJECT_DIR=/path/to/new-project
 
 ## Changelog
 
-### v1.2.1 (Coming Soon)
+### v1.2.1
 
 - **NEW**: Tool `pull_workflows` - pull .workflows folder về project
 - **NEW**: Config `MEMORIZE_MCP_TARGET_PROJECT_DIR`
