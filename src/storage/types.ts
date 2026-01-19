@@ -98,3 +98,40 @@ export interface SyncResult {
 	errors?: string[];
 	message: string;
 }
+
+/**
+ * v1.2.1: Workflow types
+ */
+
+/**
+ * Options for pulling workflows
+ */
+export interface PullWorkflowsOptions {
+	targetDir?: string;
+	overwrite?: boolean;
+	filename?: string;
+	projectSlug?: string;
+}
+
+/**
+ * Stats for pull workflows operation
+ */
+export interface PullWorkflowsStats {
+	created: number;
+	updated: number;
+	skipped: number;
+	failed: number;
+	total: number;
+}
+
+/**
+ * Result of pull workflows operation
+ */
+export interface PullWorkflowsResult {
+	success: boolean;
+	targetDir: string;
+	stats: PullWorkflowsStats;
+	files: string[];
+	message: string;
+	errors?: string[];
+}
