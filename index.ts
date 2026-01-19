@@ -4,13 +4,13 @@ import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { saveMemory, syncFromCloud } from "./src/storage/index.js";
+import { saveMemory, syncFromCloud, pullWorkflows } from "./src/storage/index.js";
 import { getConfig } from "./src/config.js";
 
 const config = getConfig();
 
 const server = new Server(
-	{ name: "memorize-mcp-server", version: "1.2.0" },
+	{ name: "memorize-mcp-server", version: "1.2.1" },
 	{ capabilities: { tools: {} } }
 );
 
@@ -67,6 +67,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 							type: "string",
 							description:
 								"(Optional) Chỉ sync file cụ thể thay vì tất cả memories",
+						},
+					},
+					required: [],
+				},
+			},
+			{
+				name: "pull_workflows",
+				description:
+					"Pull folder .workflows từ cloud/source về folder project đã cấu hình trong env. Workflows chứa hướng dẫn cho AI agent.",
+				inputSchema: {
+					type: "object",
+					properties: {
+						targetDir: {
+							type: "string",
+							description:
+								"(Optional) Thư mục project đích. Nếu không có sẽ dùng MEMORIZE_MCP_TARGET_PROJECT_DIR từ env.",
+						},
+						overwrite: {
+							type: "boolean",
+							description:
+								"(Optional) Ghi đè file nếu đã tồn tại. Mặc định: false",
+						},
+						filename: {
+							type: "string",
+							description:
+								"(Optional) Chỉ pull một workflow file cụ thể (vd: 'SAVE_MEMORY.md')",
 						},
 					},
 					required: [],
@@ -188,6 +214,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		}
 	}
 
+	if (request.params.name === "pull_workflows") {
+		const { targetDir, overwrite, filename } = request.params
+			.arguments as any;
+
+		console.log(`[${new Date().toISOString()}] Processing pull_workflows:`, {
+			targetDir: targetDir || "(from env)",
+			overwrite: overwrite || false,
+			filename: filename || "(all files)",
+		});
+
+		try {
+			const result = await pullWorkflows(
+				{
+					targetDir,
+					overwrite,
+					filename,
+				},
+				config
+			);
+
+			return {
+				content: [{ type: "text", text: result.message }],
+				isError: !result.success,
+			};
+		} catch (error: any) {
+			console.error(
+				`[${new Date().toISOString()}] ❌ Error in pull_workflows:`,
+				error
+			);
+			return {
+				content: [
+					{
+						type: "text",
+						text: `❌ Lỗi: ${error.message || String(error)}`,
+					},
+				],
+				isError: true,
+			};
+		}
+	}
+
 	console.warn(
 		`[${new Date().toISOString()}] ⚠️ Unknown tool requested: ${
 			request.params.name
@@ -200,11 +267,16 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.log("=".repeat(50));
-console.log("🚀 Memorize MCP Server v1.2 Started");
+console.log("🚀 Memorize MCP Server v1.2.1 Started");
 console.log(`📁 Memory Directory: ${config.memoryDir}`);
 console.log(
 	`☁️  Supabase: ${
 		config.supabase.url ? "Configured ✓" : "Not configured (local-only)"
+	}`
+);
+console.log(
+	`📋 Workflows: ${config.workflows.sourceType} source ${
+		config.workflows.targetProjectDir ? "✓" : "(no target dir)"
 	}`
 );
 console.log(`⏰ Started at: ${new Date().toLocaleString("vi-VN")}`);

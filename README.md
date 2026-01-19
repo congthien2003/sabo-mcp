@@ -3,11 +3,16 @@
 ## Tóm tắt nhanh
 
 - MCP server đơn giản dùng để lưu trữ bản tóm tắt nội dung công việc ra file JSON trên máy local.
-- Cung cấp 1 tool duy nhất: `save_memorize` – nhận `filename`, `topic`, `content` và ghi thành file JSON.
+- Cung cấp 3 tools:
+  - `save_memorize`: Lưu memory mới (local + cloud sync)
+  - `sync_memorize`: Đồng bộ memories từ cloud về local
+  - `pull_workflows`: Pull workflows instructions về project (v1.2.1+)
 - Thư mục lưu trữ mặc định: `./.memories/data` (có thể thay đổi qua biến môi trường `MEMORIZE_MCP_PROJECT_ROOT`).
 - **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
+- **V1.2+**: Hỗ trợ sync memories từ cloud về local.
+- **V1.2.1+**: Pull workflows (.workflows folder) về project để hướng dẫn AI agent.
 
-**Phiên bản hiện tại**: `1.1.0` – xem chi tiết trong `CHANGELOG.md`.
+**Phiên bản hiện tại**: `1.2.1` – xem chi tiết trong `CHANGELOG.md`.
 
 ---
 
@@ -102,7 +107,7 @@ Cấu hình thật có thể khác tuỳ client MCP bạn đang dùng, nhưng ý
 
 ## Available Tools
 
-Server cung cấp 2 tools độc lập:
+Server cung cấp 3 tools:
 
 ---
 
@@ -208,6 +213,79 @@ Nếu có lỗi ghi file, server trả về nội dung text với mô tả lỗi
   ⏭️  Skipped: 5
 ```
 
+---
+
+## Tool 3: `pull_workflows` (v1.2.1+)
+
+### Mô tả
+
+- **Chức năng**: Pull folder `.workflows` từ source về folder project của user. Workflows chứa hướng dẫn cho AI agent về cách thực hiện các task.
+
+### Input schema
+
+```json
+{
+	"type": "object",
+	"properties": {
+		"targetDir": {
+			"type": "string",
+			"description": "(Optional) Thư mục project đích. Nếu không có sẽ dùng MEMORIZE_MCP_TARGET_PROJECT_DIR từ env."
+		},
+		"overwrite": {
+			"type": "boolean",
+			"description": "(Optional) Ghi đè file nếu đã tồn tại. Mặc định: false"
+		},
+		"filename": {
+			"type": "string",
+			"description": "(Optional) Chỉ pull một workflow file cụ thể (vd: 'SAVE_MEMORY.md')"
+		}
+	},
+	"required": []
+}
+```
+
+### Environment Variables
+
+```bash
+# Required: Target project directory
+export MEMORIZE_MCP_TARGET_PROJECT_DIR="/path/to/your-project"
+
+# Optional: Source type (default: local)
+export MEMORIZE_MCP_WORKFLOWS_SOURCE_TYPE="local"  # or "supabase", "github"
+
+# Optional: Custom source URL
+export MEMORIZE_MCP_WORKFLOWS_SOURCE="https://..."
+```
+
+### Quy trình hoạt động
+
+1. Client gọi tool `pull_workflows`.
+2. Server xác định source (local/supabase/github) và target directory.
+3. List tất cả workflow files từ source (hoặc chỉ 1 file nếu có `filename`).
+4. Với mỗi workflow file:
+   - Nếu file local không tồn tại → **Create**
+   - Nếu `overwrite=true` → **Update** (ghi đè)
+   - Ngược lại → **Skip**
+5. Trả về kết quả:
+
+```text
+✅ Pull workflows hoàn tất!
+📥 Đã tải: 3 files
+🔄 Đã cập nhật: 1 file
+⏭️ Bỏ qua (đã tồn tại): 2 files
+📁 Target: /path/to/project/.workflows
+```
+
+### Use Cases
+
+- **New project setup**: Pull workflows về project mới để agent có hướng dẫn
+- **Update workflows**: Update workflows khi có version mới từ source
+- **Share workflows**: Maintain consistency giữa các projects
+
+Xem thêm: `.workflows/SAVE_MEMORY.md` - Workflow hướng dẫn agent tự động save memory sau task.
+
+---
+
 ## Logging
 
 Server in log ra console mỗi khi:
@@ -222,13 +300,15 @@ Log này hữu ích để debug khi tích hợp với client MCP.
 ## Tóm tắt (bản rút gọn)
 
 - Đây là một MCP server nhỏ, chạy bằng Bun, dùng stdio.
-- Server cung cấp 2 tools:
+- Server cung cấp 3 tools:
   - `save_memorize`: Lưu memory mới (local + cloud)
   - `sync_memorize`: Đồng bộ memories từ cloud về local
+  - `pull_workflows`: Pull workflows về project để hướng dẫn agent (v1.2.1+)
 - Thư mục lưu được cấu hình bởi `MEMORIZE_MCP_PROJECT_ROOT`, mặc định `.memories/data`.
 - Phù hợp để dùng như "bộ nhớ ngoài" cho các phiên làm việc với AI/LLM.
 - **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
 - **V1.2+**: Hỗ trợ sync memories từ Supabase Cloud về local storage.
+- **V1.2.1+**: Pull workflows instructions về project.
 
 ---
 

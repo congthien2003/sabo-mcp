@@ -18,6 +18,13 @@ export interface Config {
 		projectSlug?: string;
 	};
 
+	// v1.2.1: Workflows configuration
+	workflows: {
+		sourceType: "local" | "supabase" | "github";
+		sourceUrl?: string;
+		targetProjectDir?: string;
+	};
+
 	// System info
 	createdFrom: string;
 }
@@ -33,6 +40,12 @@ export function getConfig(): Config {
 			url: env.MEMORIZE_MCP_SUPABASE_URL,
 			serviceRoleKey: env.MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY,
 			projectSlug: env.MEMORIZE_MCP_PROJECT_SLUG,
+		},
+
+		workflows: {
+			sourceType: (env.MEMORIZE_MCP_WORKFLOWS_SOURCE_TYPE as any) || "local",
+			sourceUrl: env.MEMORIZE_MCP_WORKFLOWS_SOURCE,
+			targetProjectDir: env.MEMORIZE_MCP_TARGET_PROJECT_DIR,
 		},
 
 		createdFrom: `${os.hostname()}@${os.userInfo().username}`,

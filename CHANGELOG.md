@@ -5,6 +5,39 @@ Tất cả thay đổi quan trọng của dự án này sẽ được ghi lại 
 Định dạng dựa theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 và version tuân theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-01-19
+
+### Added
+
+- **Pull Workflows**: Tool mới `pull_workflows` để pull folder `.workflows` về project của user.
+- Module `src/storage/workflows.ts` với functions:
+  - `pullWorkflows()`: Main function để pull workflows từ source.
+  - `listLocalWorkflows()`: List workflow files từ local source.
+  - `readLocalWorkflow()`: Đọc workflow content từ source.
+  - `writeWorkflowFile()`: Ghi workflow vào target project.
+- Workflow configurations trong `src/config.ts`:
+  - `workflows.sourceType`: Loại source (local/supabase/github).
+  - `workflows.sourceUrl`: URL của custom source (optional).
+  - `workflows.targetProjectDir`: Thư mục project đích.
+- Environment variables mới:
+  - `MEMORIZE_MCP_WORKFLOWS_SOURCE_TYPE`: Loại source (mặc định: "local").
+  - `MEMORIZE_MCP_WORKFLOWS_SOURCE`: Custom source URL (optional).
+  - `MEMORIZE_MCP_TARGET_PROJECT_DIR`: Thư mục project đích (required cho pull_workflows).
+- TypeScript types mới: `PullWorkflowsOptions`, `PullWorkflowsResult`, `PullWorkflowsStats`.
+- Documentation:
+  - `docs/version1.2.1/IMPLEMENTATION_PLAN.md`: Chi tiết implementation plan.
+  - `docs/version1.2.1/overview.md`: Tổng quan tính năng v1.2.1.
+
+### Changed
+
+- Server version bump: 1.2.0 → 1.2.1.
+- Startup log hiển thị thêm workflows configuration status.
+- README.md updated với tool `pull_workflows` documentation.
+
+### Fixed
+
+- N/A
+
 ## [1.2.0] - 2026-01-05
 
 ### Added
