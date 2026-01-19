@@ -181,15 +181,34 @@ export async function pullWorkflows(
 
 		// Filter by filename if specified
 		if (options.filename) {
-			workflowFiles = workflowFiles.filter((f) => f === options.filename);
+			const requestedFilename = options.filename;
+			const safeFilename = path.basename(requestedFilename);
+
+			// Reject filenames that attempt directory traversal or contain path separators
+			if (
+				!safeFilename ||
+				safeFilename !== requestedFilename ||
+				safeFilename.includes(path.sep)
+			) {
+				return {
+					success: false,
+					targetDir,
+					stats,
+					files: [],
+					message: `Invalid workflow filename: ${requestedFilename}`,
+					errors: [`Invalid workflow filename: ${requestedFilename}`],
+				};
+			}
+
+			workflowFiles = workflowFiles.filter((f) => f === safeFilename);
 			if (workflowFiles.length === 0) {
 				return {
 					success: false,
 					targetDir,
 					stats,
 					files: [],
-					message: `Workflow file not found: ${options.filename}`,
-					errors: [`File not found: ${options.filename}`],
+					message: `Workflow file not found: ${requestedFilename}`,
+					errors: [`File not found: ${requestedFilename}`],
 				};
 			}
 		}
