@@ -247,7 +247,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 				content: [
 					{
 						type: "text",
-						text: `❌ Lỗi: ${error.message || String(error)}`,
+						text: `❌ Error: ${error.message || String(error)}`,
 					},
 				],
 				isError: true,
