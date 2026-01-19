@@ -277,16 +277,16 @@ export async function pullWorkflows(
 		}
 
 		// Build result message
-		let message = `✅ Pull workflows hoàn tất!\n`;
-		message += `📥 Đã tải: ${stats.created} files\n`;
+		let message = `✅ Pull workflows completed!\n`;
+		message += `📥 Created: ${stats.created} files\n`;
 		if (stats.updated > 0) {
-			message += `🔄 Đã cập nhật: ${stats.updated} files\n`;
+			message += `🔄 Updated: ${stats.updated} files\n`;
 		}
 		if (stats.skipped > 0) {
-			message += `⏭️ Bỏ qua (đã tồn tại): ${stats.skipped} files\n`;
+			message += `⏭️ Skipped (already exists): ${stats.skipped} files\n`;
 		}
 		if (stats.failed > 0) {
-			message += `❌ Thất bại: ${stats.failed} files\n`;
+			message += `❌ Failed: ${stats.failed} files\n`;
 		}
 		message += `📁 Target: ${path.join(targetDir, ".workflows")}`;
 
