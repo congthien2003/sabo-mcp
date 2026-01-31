@@ -12,9 +12,9 @@
 - **V1.2+**: Hỗ trợ sync memories từ cloud về local.
 - **V1.2.1+**: Pull workflows (.workflows folder) về project để hướng dẫn AI agent.
 - **V1.3+**: CLI support với `npx memorize-mcp` để pull prompts và skills.
-- **V1.3.1+**: Pull skills theo nhóm (--basic, --frontend, --all).
+- **V1.3.2+**: Pull skills theo nhóm (--basic, --frontend, --all).
 
-**Phiên bản hiện tại**: `1.3.1` – xem chi tiết trong `CHANGELOG.md`.
+**Phiên bản hiện tại**: `1.3.2` – xem chi tiết trong `CHANGELOG.md`.
 
 ---
 
@@ -456,7 +456,7 @@ Log này hữu ích để debug khi tích hợp với client MCP.
 - **V1.2+**: Hỗ trợ sync memories từ Supabase Cloud về local storage.
 - **V1.2.1+**: Pull workflows instructions về project.
 - **V1.3+**: CLI support với `npx memorize-mcp`.
-- **V1.3.1+**: Pull skills theo nhóm (--basic, --frontend, --all).
+- **V1.3.2+**: Pull skills theo nhóm (--basic, --frontend, --all).
 
 ---
 

@@ -5,7 +5,7 @@ Tất cả thay đổi quan trọng của dự án này sẽ được ghi lại 
 Định dạng dựa theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 và version tuân theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.1] - 2026-01-31
+## [1.3.2] - 2026-01-31
 
 ### Added
 
@@ -19,22 +19,30 @@ và version tuân theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html
   - `.skills/writing-plan/SKILL.md`
   - `.skills/front-end/react-best-practices/SKILL.md`
   - `.skills/front-end/web-design-guidelines/SKILL.md`
-
 - **Skill Template**: Hướng dẫn tạo skill mới tại `docs/resources/create-skill.md`
 
 ### Changed
 
 - **CLI Help**: Cập nhật help text với skills options mới
 - **Target Directory**: Skills được pull vào `.skills/` thay vì `.workflows/skills/`
-- Version bump: 1.3.0 → 1.3.1
+- Version bump: 1.3.1 → 1.3.2
 
 ### Migration Guide
 
-Nếu bạn đang dùng v1.3.0:
+Nếu bạn đang dùng v1.3.0 hoặc v1.3.1:
 
 1. Skills giờ được pull vào `.skills/` (không còn `.workflows/skills/`)
 2. Chạy `npx memorize-mcp pull --skills --basic` để pull basic skills
 3. Hoặc `npx memorize-mcp pull --all` để pull tất cả (prompts + skills)
+
+---
+
+## [1.3.1] - 2026-01-31
+
+### Changed
+
+- **Homepage**: Cập nhật landing page URL trong package.json (`https://memorize-mcp.vercel.app`)
+- Version bump: 1.3.0 → 1.3.1
 
 ---
 

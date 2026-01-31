@@ -14,7 +14,7 @@ import { getConfig } from "./src/config.js";
 const config = getConfig();
 
 const server = new Server(
-  { name: "memorize-mcp-server", version: "1.3.1" },
+  { name: "memorize-mcp-server", version: "1.3.2" },
   { capabilities: { tools: {} } },
 );
 
