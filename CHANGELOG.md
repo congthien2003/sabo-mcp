@@ -5,6 +5,84 @@ Tất cả thay đổi quan trọng của dự án này sẽ được ghi lại 
 Định dạng dựa theo [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 và version tuân theo [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-01-31
+
+### Added
+
+- **Skills Pull via CLI**: Mở rộng CLI với khả năng pull skills theo nhóm:
+  - `npx memorize-mcp pull --skills --all` - Pull tất cả skills
+  - `npx memorize-mcp pull --skills --basic` - Pull basic skills (brainstorming, executing-plans, writing-plan)
+  - `npx memorize-mcp pull --skills --frontend` - Pull frontend skills (react-best-practices, web-design-guidelines)
+- **Skills Structure**: Tổ chức skills theo cấu trúc mới `{skillName}/SKILL.md`:
+  - `.skills/brainstorming/SKILL.md`
+  - `.skills/executing-plans/SKILL.md`
+  - `.skills/writing-plan/SKILL.md`
+  - `.skills/front-end/react-best-practices/SKILL.md`
+  - `.skills/front-end/web-design-guidelines/SKILL.md`
+
+- **Skill Template**: Hướng dẫn tạo skill mới tại `docs/resources/create-skill.md`
+
+### Changed
+
+- **CLI Help**: Cập nhật help text với skills options mới
+- **Target Directory**: Skills được pull vào `.skills/` thay vì `.workflows/skills/`
+- Version bump: 1.3.0 → 1.3.1
+
+### Migration Guide
+
+Nếu bạn đang dùng v1.3.0:
+
+1. Skills giờ được pull vào `.skills/` (không còn `.workflows/skills/`)
+2. Chạy `npx memorize-mcp pull --skills --basic` để pull basic skills
+3. Hoặc `npx memorize-mcp pull --all` để pull tất cả (prompts + skills)
+
+---
+
+## [1.3.0] - 2026-01-31
+
+### Added
+
+- **CLI Support**: Chạy `npx memorize-mcp` hoặc `bun run cli` để sử dụng CLI.
+  - `npx memorize-mcp` - Hiển thị banner và available resources
+  - `npx memorize-mcp pull` - Pull resources (default: prompts)
+  - `npx memorize-mcp pull --all` - Pull tất cả categories (prompts + skills)
+  - `npx memorize-mcp pull --prompts` - Pull prompts only (includes /save-memory)
+  - `npx memorize-mcp pull --skills` - Pull skills only
+  - `npx memorize-mcp pull --target ./path` - Chỉ định target directory
+  - `npx memorize-mcp pull --overwrite` - Ghi đè files hiện có
+
+- **Resource Categories**: Tổ chức resources thành 2 categories:
+  - `.github/prompts/` - AI agent prompts (e.g., `/save-memory`)
+  - `.workflows/skills/` - Reusable AI agent skills
+
+- **`/save-memory` Prompt**: Prompt file cho AI agent
+  - Syntax: `/save-memory <Task description>`
+  - AI agent thực thi task rồi tự động save memory
+  - File: `.github/prompts/save-memory.prompt.md`
+
+- CLI entry point: `src/cli/index.ts`
+- Pull command: `src/cli/commands/pull.ts`
+- Resources được pull:
+  - `.github/prompts/save-memory.prompt.md`
+  - `.workflows/skills/code_analysis.md`
+  - `.workflows/skills/task_planning.md`
+
+### Changed
+
+- **package.json**:
+  - Thêm `bin` field cho CLI support
+  - Bỏ `private: true` để có thể publish
+  - Thêm script `cli` để chạy CLI
+  - Version bump: 1.2.1 → 1.3.0
+
+- Server version bump: 1.2.1 → 1.3.0
+
+### Migration Guide
+
+1. Chạy `npx memorize-mcp pull` để pull `/save-memory` prompt
+2. Hoặc chạy `npx memorize-mcp pull --all` để pull tất cả resources (prompts + skills)
+3. Check `.github/prompts/save-memory.prompt.md` để xem cách sử dụng
+
 ## [1.2.1] - 2026-01-19
 
 ### Added

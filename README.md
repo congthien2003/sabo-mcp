@@ -11,8 +11,10 @@
 - **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
 - **V1.2+**: Hỗ trợ sync memories từ cloud về local.
 - **V1.2.1+**: Pull workflows (.workflows folder) về project để hướng dẫn AI agent.
+- **V1.3+**: CLI support với `npx memorize-mcp` để pull prompts và skills.
+- **V1.3.1+**: Pull skills theo nhóm (--basic, --frontend, --all).
 
-**Phiên bản hiện tại**: `1.2.1` – xem chi tiết trong `CHANGELOG.md`.
+**Phiên bản hiện tại**: `1.3.1` – xem chi tiết trong `CHANGELOG.md`.
 
 ---
 
@@ -87,15 +89,15 @@ Nếu bạn dùng Claude Desktop và muốn thêm server này vào danh sách MC
 
 ```jsonc
 {
-	"mcpServers": {
-		"memorize-mcp": {
-			"command": "bun",
-			"args": ["run", "index.ts"],
-			"env": {
-				"MEMORIZE_MCP_PROJECT_ROOT": "C:/path/to/your/memories"
-			}
-		}
-	}
+  "mcpServers": {
+    "memorize-mcp": {
+      "command": "bun",
+      "args": ["run", "index.ts"],
+      "env": {
+        "MEMORIZE_MCP_PROJECT_ROOT": "C:/path/to/your/memories",
+      },
+    },
+  },
 }
 ```
 
@@ -173,22 +175,22 @@ Nếu có lỗi ghi file, server trả về nội dung text với mô tả lỗi
 
 ```json
 {
-	"type": "object",
-	"properties": {
-		"projectSlug": {
-			"type": "string",
-			"description": "(Optional) Slug của project để sync. Nếu không có sẽ dùng MEMORIZE_MCP_PROJECT_SLUG từ env."
-		},
-		"overwrite": {
-			"type": "boolean",
-			"description": "(Optional) Bắt buộc ghi đè tất cả file local, bỏ qua kiểm tra timestamp. Mặc định: false"
-		},
-		"filename": {
-			"type": "string",
-			"description": "(Optional) Chỉ sync file cụ thể thay vì tất cả memories"
-		}
-	},
-	"required": []
+  "type": "object",
+  "properties": {
+    "projectSlug": {
+      "type": "string",
+      "description": "(Optional) Slug của project để sync. Nếu không có sẽ dùng MEMORIZE_MCP_PROJECT_SLUG từ env."
+    },
+    "overwrite": {
+      "type": "boolean",
+      "description": "(Optional) Bắt buộc ghi đè tất cả file local, bỏ qua kiểm tra timestamp. Mặc định: false"
+    },
+    "filename": {
+      "type": "string",
+      "description": "(Optional) Chỉ sync file cụ thể thay vì tất cả memories"
+    }
+  },
+  "required": []
 }
 ```
 
@@ -225,22 +227,22 @@ Nếu có lỗi ghi file, server trả về nội dung text với mô tả lỗi
 
 ```json
 {
-	"type": "object",
-	"properties": {
-		"targetDir": {
-			"type": "string",
-			"description": "(Optional) Thư mục project đích. Nếu không có sẽ dùng MEMORIZE_MCP_TARGET_PROJECT_DIR từ env."
-		},
-		"overwrite": {
-			"type": "boolean",
-			"description": "(Optional) Ghi đè file nếu đã tồn tại. Mặc định: false"
-		},
-		"filename": {
-			"type": "string",
-			"description": "(Optional) Chỉ pull một workflow file cụ thể (vd: 'SAVE_MEMORY.md')"
-		}
-	},
-	"required": []
+  "type": "object",
+  "properties": {
+    "targetDir": {
+      "type": "string",
+      "description": "(Optional) Thư mục project đích. Nếu không có sẽ dùng MEMORIZE_MCP_TARGET_PROJECT_DIR từ env."
+    },
+    "overwrite": {
+      "type": "boolean",
+      "description": "(Optional) Ghi đè file nếu đã tồn tại. Mặc định: false"
+    },
+    "filename": {
+      "type": "string",
+      "description": "(Optional) Chỉ pull một workflow file cụ thể (vd: 'SAVE_MEMORY.md')"
+    }
+  },
+  "required": []
 }
 ```
 
@@ -286,6 +288,150 @@ Xem thêm: `.workflows/SAVE_MEMORY.md` - Workflow hướng dẫn agent tự đ�
 
 ---
 
+## CLI Usage (v1.3+)
+
+### Cài đặt và sử dụng
+
+```bash
+# Chạy CLI trực tiếp (không cần cài đặt global)
+npx memorize-mcp
+
+# Hoặc cài đặt global
+npm install -g memorize-mcp
+memorize-mcp
+```
+
+### Commands
+
+```bash
+# Hiển thị help
+npx memorize-mcp help
+
+# Pull prompts (default)
+npx memorize-mcp pull
+
+# Pull tất cả resources (prompts + all skills)
+npx memorize-mcp pull --all
+```
+
+### Skills Options (v1.3.1+)
+
+```bash
+# Pull tất cả skills
+npx memorize-mcp pull --skills --all
+
+# Pull basic skills (brainstorming, executing-plans, writing-plan)
+npx memorize-mcp pull --skills --basic
+
+# Pull frontend skills (react-best-practices, web-design-guidelines)
+npx memorize-mcp pull --skills --frontend
+
+# Pull với overwrite (ghi đè files hiện có)
+npx memorize-mcp pull --skills --basic --overwrite
+
+# Chỉ định target directory
+npx memorize-mcp pull --skills --all --target ./my-project
+```
+
+### Resources được pull
+
+| Category          | Directory            | Description                                  |
+| ----------------- | -------------------- | -------------------------------------------- |
+| Prompts           | `.github/prompts/`   | AI agent prompts (e.g., `/save-memory`)      |
+| Skills - Basic    | `.skills/`           | brainstorming, executing-plans, writing-plan |
+| Skills - Frontend | `.skills/front-end/` | react-best-practices, web-design-guidelines  |
+
+### Skill Groups
+
+| Group        | Skills                                                          |
+| ------------ | --------------------------------------------------------------- |
+| `--basic`    | brainstorming, executing-plans, writing-plan                    |
+| `--frontend` | front-end/react-best-practices, front-end/web-design-guidelines |
+| `--all`      | Tất cả skills có sẵn                                            |
+
+---
+
+## Skills System
+
+### Giới thiệu
+
+Từ phiên bản 1.3, memorize-mcp tổ chức các best practices, guidelines và workflows thành "skills" - các module tái sử dụng được mà AI agents có thể tham khảo khi thực hiện tasks.
+
+### Cấu trúc Skills
+
+Mỗi skill được lưu trong thư mục riêng theo pattern:
+
+```
+.skills/
+  brainstorming/
+    SKILL.md
+  executing-plans/
+    SKILL.md
+  writing-plan/
+    SKILL.md
+  front-end/
+    react-best-practices/
+      SKILL.md
+    web-design-guidelines/
+      SKILL.md
+```
+
+### Skills có sẵn
+
+#### Basic Skills (`--basic`)
+
+- **brainstorming** - Kỹ năng brainstorm ý tưởng
+- **executing-plans** - Kỹ năng thực thi kế hoạch
+- **writing-plan** - Kỹ năng viết kế hoạch
+
+#### Frontend Skills (`--frontend`)
+
+- **react-best-practices** - React/Next.js performance best practices
+- **web-design-guidelines** - Web design guidelines
+
+### Pull Skills
+
+```bash
+# Pull basic skills
+npx memorize-mcp pull --skills --basic
+
+# Pull frontend skills
+npx memorize-mcp pull --skills --frontend
+
+# Pull all skills
+npx memorize-mcp pull --skills --all
+```
+
+### Tạo Skill mới
+
+Xem hướng dẫn chi tiết: [How to Create a Skill](./docs/resources/create-skill.md)
+
+Quick steps:
+
+1. Tạo thư mục mới: `.skills/{your-skill-name}/`
+2. Tạo file `SKILL.md` với frontmatter:
+
+```markdown
+---
+name: your-skill-name
+description: Clear description with trigger keywords
+license: MIT
+metadata:
+  author: your-name
+  version: "1.0.0"
+  category: general
+---
+
+# Skill Title
+
+[Content...]
+```
+
+3. Follow template structure trong [create-skill.md](./docs/resources/create-skill.md)
+4. Test skill với workflows
+
+---
+
 ## Logging
 
 Server in log ra console mỗi khi:
@@ -309,6 +455,8 @@ Log này hữu ích để debug khi tích hợp với client MCP.
 - **V1.1+**: Hỗ trợ sync lên Supabase Cloud để chia sẻ memory giữa nhiều máy.
 - **V1.2+**: Hỗ trợ sync memories từ Supabase Cloud về local storage.
 - **V1.2.1+**: Pull workflows instructions về project.
+- **V1.3+**: CLI support với `npx memorize-mcp`.
+- **V1.3.1+**: Pull skills theo nhóm (--basic, --frontend, --all).
 
 ---
 
@@ -327,13 +475,11 @@ Từ phiên bản 1.1, memorize-mcp hỗ trợ đồng bộ memory lên Supabase
 1. **Tạo Supabase project** tại [supabase.com](https://supabase.com)
 
 2. **Chạy migration SQL** từ file `docs/version1.1/migrations/001_initial_schema.sql`:
-
    - Vào Supabase Dashboard → SQL Editor
    - Copy nội dung file SQL và chạy
    - Kiểm tra 2 bảng `projects` và `memories` đã được tạo
 
 3. **Lấy credentials**:
-
    - URL: Settings → API → Project URL
    - Service Role Key: Settings → API → `service_role` key (secret)
 
@@ -350,25 +496,24 @@ Hoặc trong MCP client config (ví dụ Claude Desktop):
 
 ```jsonc
 {
-	"mcpServers": {
-		"memorize-mcp": {
-			"command": "bun",
-			"args": ["run", "index.ts"],
-			"env": {
-				"MEMORIZE_MCP_PROJECT_ROOT": "C:/memories",
-				"MEMORIZE_MCP_SUPABASE_URL": "https://xxx.supabase.co",
-				"MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY": "your-key",
-				"MEMORIZE_MCP_PROJECT_SLUG": "my-project"
-			}
-		}
-	}
+  "mcpServers": {
+    "memorize-mcp": {
+      "command": "bun",
+      "args": ["run", "index.ts"],
+      "env": {
+        "MEMORIZE_MCP_PROJECT_ROOT": "C:/memories",
+        "MEMORIZE_MCP_SUPABASE_URL": "https://xxx.supabase.co",
+        "MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY": "your-key",
+        "MEMORIZE_MCP_PROJECT_SLUG": "my-project",
+      },
+    },
+  },
 }
 ```
 
 ### Cách hoạt động
 
 - Mỗi lần gọi `save_memorize`:
-
   1. Luôn lưu file JSON local trước (offline-first).
   2. Nếu Supabase được cấu hình → sync thêm lên cloud.
   3. Nếu cloud sync thất bại → local vẫn thành công (graceful degradation).
@@ -382,7 +527,6 @@ Hoặc trong MCP client config (ví dụ Claude Desktop):
 ### Sync giữa nhiều máy
 
 - Tất cả máy cần cùng:
-
   - `MEMORIZE_MCP_SUPABASE_URL`
   - `MEMORIZE_MCP_SUPABASE_SERVICE_ROLE_KEY`
   - `MEMORIZE_MCP_PROJECT_SLUG` (để ghi vào cùng project)
@@ -397,3 +541,7 @@ Xem thêm chi tiết tại: `docs/version1.1/overview.md`
 
 - Dự án sử dụng Semantic Versioning (`MAJOR.MINOR.PATCH`).
 - Mọi thay đổi quan trọng sẽ được cập nhật trong file `CHANGELOG.md`.
+
+--- Plan tiếp theo
+
+- Hỗ trợ cursor IDE sử dụng command

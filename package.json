@@ -1,24 +1,62 @@
 {
-	"name": "memorize-mcp",
-	"version": "1.2.1",
-	"description": "A minimal Model Context Protocol (MCP) server to persist work summaries as local JSON memories.",
-	"module": "index.ts",
-	"type": "module",
-	"private": true,
-	"scripts": {
-		"dev": "bun run index.ts",
-		"start": "bun run index.ts",
-		"lint": "echo \"No linter configured yet\""
-	},
-	"devDependencies": {
-		"@types/bun": "latest",
-		"@types/node": "^25.0.3"
-	},
-	"peerDependencies": {
-		"typescript": "^5.9.3"
-	},
-	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.25.1",
-		"@supabase/supabase-js": "^2.89.0"
-	}
+  "name": "memorize-mcp",
+  "version": "1.3.1",
+  "description": "A minimal Model Context Protocol (MCP) server to persist work summaries as local JSON memories with CLI support for pulling AI agent prompts and skills.",
+  "author": "CongThien",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "memory",
+    "llm",
+    "claude",
+    "copilot",
+    "agent",
+    "workflow",
+    "prompts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/congthien2003/memorize-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/congthien2003/memorize-mcp/issues"
+  },
+  "homepage": "https://memorize-mcp.vercel.app",
+  "module": "index.ts",
+  "type": "module",
+  "main": "index.ts",
+  "bin": {
+    "memorize-mcp": "./src/cli/index.ts"
+  },
+  "files": [
+    "index.ts",
+    "src/**/*",
+    ".github/prompts/save-memory.prompt.md",
+    ".workflows/skills/**/*",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "dev": "bun run index.ts",
+    "start": "bun run index.ts",
+    "cli": "bun run ./src/cli/index.ts",
+    "prepublishOnly": "echo 'Ready to publish!'",
+    "lint": "echo \"No linter configured yet\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.0.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@supabase/supabase-js": "^2.89.0"
+  }
 }

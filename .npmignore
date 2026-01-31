@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Test files
+test-project/
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Documentation (not needed in package)
+docs/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+*.log
+*.tgz
+
+# Environment
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Unused workflows (only keep skills)
+.workflows/commands/
+.workflows/workflows/
+
+# Other prompts (only keep save-memory)
+.github/prompts/ui-ux-pro-max.prompt.md
