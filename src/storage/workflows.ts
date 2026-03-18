@@ -229,52 +229,54 @@ export async function pullWorkflows(
 
 		stats.total = workflowFiles.length;
 
-		// Process each workflow file
-		for (const filename of workflowFiles) {
-			try {
-				// Check if file exists in target
-				const targetFilePath = path.join(
-					targetDir,
-					".workflows",
-					filename
-				);
-				const targetFileExists = await fileExists(targetFilePath);
-
-				// Decide action
-				if (targetFileExists && !options.overwrite) {
-					stats.skipped++;
-					console.log(
-						`[${new Date().toISOString()}] Skipping ${filename} (already exists)`
+		// Process each workflow file pseudo-parallelly
+		await Promise.allSettled(
+			workflowFiles.map(async (filename) => {
+				try {
+					// Check if file exists in target
+					const targetFilePath = path.join(
+						targetDir,
+						".workflows",
+						filename
 					);
-					continue;
+					const targetFileExists = await fileExists(targetFilePath);
+
+					// Decide action
+					if (targetFileExists && !options.overwrite) {
+						stats.skipped++;
+						console.log(
+							`[${new Date().toISOString()}] Skipping ${filename} (already exists)`
+						);
+						return;
+					}
+
+					// Read content from source
+					const content = await readLocalWorkflow(filename);
+
+					// Write to target
+					await writeWorkflowFile(targetDir, filename, content);
+
+					if (targetFileExists) {
+						stats.updated++;
+						console.log(
+							`[${new Date().toISOString()}] Updated ${filename}`
+						);
+					} else {
+						stats.created++;
+						console.log(
+							`[${new Date().toISOString()}] Created ${filename}`
+						);
+					}
+
+					processedFiles.push(filename);
+				} catch (error: any) {
+					stats.failed++;
+					const errorMsg = `Failed to process ${filename}: ${error.message}`;
+					errors.push(errorMsg);
+					console.error(`[${new Date().toISOString()}] ${errorMsg}`);
 				}
-
-				// Read content from source
-				const content = await readLocalWorkflow(filename);
-
-				// Write to target
-				await writeWorkflowFile(targetDir, filename, content);
-
-				if (targetFileExists) {
-					stats.updated++;
-					console.log(
-						`[${new Date().toISOString()}] Updated ${filename}`
-					);
-				} else {
-					stats.created++;
-					console.log(
-						`[${new Date().toISOString()}] Created ${filename}`
-					);
-				}
-
-				processedFiles.push(filename);
-			} catch (error: any) {
-				stats.failed++;
-				const errorMsg = `Failed to process ${filename}: ${error.message}`;
-				errors.push(errorMsg);
-				console.error(`[${new Date().toISOString()}] ${errorMsg}`);
-			}
-		}
+			})
+		);
 
 		// Build result message
 		let message = `✅ Pull workflows completed!\n`;

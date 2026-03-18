@@ -6,6 +6,7 @@ import {
 	getProjectMemories,
 	getProjectBySlug,
 	isSupabaseConfigured,
+	getMemoryByFilename,
 } from "./supabase.js";
 import {
 	readLocalMemory,
@@ -102,23 +103,32 @@ export async function syncFromCloud(options: SyncOptions): Promise<SyncResult> {
 			};
 		}
 
-		// Fetch all memories from cloud
-		const cloudMemories = await getProjectMemories(projectSlug, config);
+		// Fetch memories from cloud
+		let memoriesToSync: MemoryRecord[] = [];
+		if (options.filename) {
+			const singleMemory = await getMemoryByFilename(
+				projectSlug,
+				options.filename,
+				config
+			);
+			if (singleMemory) {
+				memoriesToSync = [singleMemory];
+			}
+		} else {
+			memoriesToSync = await getProjectMemories(projectSlug, config);
+		}
 
-		if (cloudMemories.length === 0) {
+		if (memoriesToSync.length === 0) {
 			return {
 				success: true,
 				memoryDir: config.memoryDir,
 				projectSlug,
-				message: "No memories found in cloud for this project.",
+				message: options.filename
+					? `No memory found in cloud matching filename: ${options.filename}`
+					: "No memories found in cloud for this project.",
 				stats,
 			};
 		}
-
-		// Filter by filename if specified
-		const memoriesToSync = options.filename
-			? cloudMemories.filter((m) => m.filename === options.filename)
-			: cloudMemories;
 
 		stats.total = memoriesToSync.length;
 

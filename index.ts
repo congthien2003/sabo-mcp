@@ -215,13 +215,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	}
 
 	if (request.params.name === "pull_workflows") {
-		const { targetDir, overwrite, filename } = request.params
+		const { targetDir, overwrite, filename, category, allCategories } = request.params
 			.arguments as any;
 
 		console.log(`[${new Date().toISOString()}] Processing pull_workflows:`, {
 			targetDir: targetDir || "(from env)",
 			overwrite: overwrite || false,
 			filename: filename || "(all files)",
+			category: category || "(none)",
+			allCategories: allCategories || false,
 		});
 
 		try {
@@ -230,6 +232,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 					targetDir,
 					overwrite,
 					filename,
+					category,
+					allCategories
 				},
 				config
 			);

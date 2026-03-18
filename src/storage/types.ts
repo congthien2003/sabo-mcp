@@ -111,6 +111,8 @@ export interface PullWorkflowsOptions {
 	overwrite?: boolean;
 	filename?: string;
 	projectSlug?: string;
+	category?: string;
+	allCategories?: boolean;
 }
 
 /**
