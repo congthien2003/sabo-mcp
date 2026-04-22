@@ -4,13 +4,13 @@ import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { saveMemory, syncFromCloud, pullAgentFile } from "./src/storage/index.js";
+import { saveMemory, syncFromCloud, pullAgentFile, searchMemories } from "./src/storage/index.js";
 import { getConfig } from "./src/config.js";
 
 const config = getConfig();
 
 const server = new Server(
-	{ name: "memorize-mcp-server", version: "1.2.1" },
+	{ name: "memorize-mcp-server", version: "1.3.0" },
 	{ capabilities: { tools: {} } }
 );
 
@@ -88,6 +88,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 							type: "boolean",
 							description:
 								"(Optional) Ghi đè AGENT.md nếu đã tồn tại. Mặc định: false",
+						},
+					},
+					required: [],
+				},
+			},
+			{
+				name: "search_memorize",
+				description:
+					"Tìm kiếm memories theo từ khóa, tags, hoặc topic. Sử dụng _index.json để tìm kiếm nhanh mà không cần đọc từng file.",
+				inputSchema: {
+					type: "object",
+					properties: {
+						query: {
+							type: "string",
+							description:
+								"(Optional) Từ khóa tìm kiếm — khớp với topic, filename, hoặc tags",
+						},
+						tags: {
+							type: "array",
+							items: { type: "string" },
+							description:
+								"(Optional) Lọc theo danh sách tags (tìm memory có ít nhất một tag trùng khớp)",
+						},
+						limit: {
+							type: "number",
+							description:
+								"(Optional) Số lượng kết quả tối đa. Mặc định: 10",
 						},
 					},
 					required: [],
@@ -247,6 +274,55 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 		}
 	}
 
+	if (request.params.name === "search_memorize") {
+		const { query, tags, limit } = request.params.arguments as any;
+
+		console.log(`[${new Date().toISOString()}] Processing search_memorize:`, {
+			query: query || "(none)",
+			tags: tags || [],
+			limit: limit || 10,
+		});
+
+		try {
+			const result = searchMemories({ query, tags, limit }, config.memoryDir);
+
+			let message = result.message;
+			if (result.results.length > 0) {
+				message += "\n\n📋 Results:";
+				for (const entry of result.results) {
+					message += `\n\n  📄 **${entry.filename}**`;
+					message += `\n     Topic: ${entry.topic}`;
+					if (entry.tags.length > 0) {
+						message += `\n     Tags: ${entry.tags.map((t) => `#${t}`).join(", ")}`;
+					}
+					message += `\n     Sections: ${entry.sectionCount}`;
+					message += `\n     Updated: ${entry.timestamp}`;
+				}
+				if (result.total > result.results.length) {
+					message += `\n\n  … and ${result.total - result.results.length} more. Use limit parameter to see more.`;
+				}
+			}
+
+			return {
+				content: [{ type: "text", text: message }],
+			};
+		} catch (error: any) {
+			console.error(
+				`[${new Date().toISOString()}] ❌ Error in search_memorize:`,
+				error
+			);
+			return {
+				content: [
+					{
+						type: "text",
+						text: `❌ Lỗi: ${error.message || String(error)}`,
+					},
+				],
+				isError: true,
+			};
+		}
+	}
+
 	console.warn(
 		`[${new Date().toISOString()}] ⚠️ Unknown tool requested: ${
 			request.params.name
@@ -259,7 +335,7 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.log("=".repeat(50));
-console.log("🚀 Memorize MCP Server v1.2.1 Started");
+console.log("🚀 Memorize MCP Server v1.3.0 Started");
 console.log(`📁 Memory Directory: ${config.memoryDir}`);
 console.log(
 	`☁️  Supabase: ${
