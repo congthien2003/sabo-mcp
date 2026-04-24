@@ -10,7 +10,7 @@ import {
 import {
 	readLocalMemory,
 	saveLocalMemory,
-	listLocalMemories,
+	rebuildIndex,
 } from "./local.js";
 import type {
 	SyncOptions,
@@ -41,6 +41,14 @@ export function decideSyncAction(
 	// If overwrite flag is true, always update
 	if (overwrite) {
 		return { action: "update", reason: "Overwrite flag is set" };
+	}
+
+	// If both sides have a content hash, use it for an exact equality check
+	if (cloudMemory.content_hash && localMemory.contentHash) {
+		if (cloudMemory.content_hash === localMemory.contentHash) {
+			return { action: "skip", reason: "Content hash matches — already up-to-date" };
+		}
+		// Hashes differ — fall through to timestamp comparison to decide direction
 	}
 
 	// Compare timestamps
@@ -195,6 +203,18 @@ export async function syncFromCloud(options: SyncOptions): Promise<SyncResult> {
 					error
 				);
 				stats.failed++;
+			}
+		}
+
+		// Rebuild index once after all files are synced (more efficient than per-file updates)
+		if (stats.created > 0 || stats.updated > 0) {
+			try {
+				rebuildIndex(config.memoryDir);
+			} catch (indexError) {
+				console.warn(
+					`[${new Date().toISOString()}] ⚠️ Index rebuild failed (non-fatal):`,
+					indexError
+				);
 			}
 		}
 

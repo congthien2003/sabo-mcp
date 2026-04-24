@@ -140,15 +140,35 @@ export async function saveSupabaseMemory(
 			return false;
 		}
 
-		// Insert memory record
-		const { error } = await client.from("memories").insert({
-			project_id: projectId,
-			filename: options.filename,
-			topic: options.topic,
-			content: options.content,
-			timestamp: options.timestamp || new Date().toISOString(),
-			created_from: options.createdFrom || config.createdFrom,
-		});
+		// Skip upsert when content hash is unchanged (avoids unnecessary DB writes)
+		if (options.contentHash) {
+			const existing = await getMemoryByFilename(
+				projectSlug,
+				options.filename,
+				config
+			);
+			if (existing?.content_hash === options.contentHash) {
+				console.log(
+					`[${new Date().toISOString()}] ⏩ Skipping cloud sync: content unchanged for ${options.filename}`
+				);
+				return true;
+			}
+		}
+
+		// Upsert memory record (conflict on project_id + filename)
+		const { error } = await client.from("memories").upsert(
+			{
+				project_id: projectId,
+				filename: options.filename,
+				topic: options.topic,
+				content: options.content,
+				timestamp: options.timestamp || new Date().toISOString(),
+				created_from: options.createdFrom || config.createdFrom,
+				content_hash: options.contentHash || null,
+				updated_at: new Date().toISOString(),
+			},
+			{ onConflict: "project_id,filename" }
+		);
 
 		if (error) {
 			console.error(

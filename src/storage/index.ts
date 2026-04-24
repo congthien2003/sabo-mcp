@@ -2,8 +2,9 @@
  * Storage layer main exports
  */
 import { getConfig, isSupabaseConfigured } from "../config.js";
-import { saveLocalMemory } from "./local.js";
+import { saveLocalMemory, updateIndex, rebuildIndex, searchMemories } from "./local.js";
 import { saveSupabaseMemory } from "./supabase.js";
+import { computeContentHash } from "./markdown.js";
 import type { SaveMemoryOptions, SaveResult } from "./types.js";
 
 export {
@@ -12,6 +13,9 @@ export {
 	readLocalMemory,
 	listLocalMemories,
 	localMemoryExists,
+	updateIndex,
+	rebuildIndex,
+	searchMemories,
 } from "./local.js";
 export {
 	isSupabaseConfigured as isSupabaseConfiguredDirect,
@@ -23,6 +27,7 @@ export {
 } from "./supabase.js";
 export { syncFromCloud, decideSyncAction } from "./sync.js";
 export { pullAgentFile } from "./agent.js";
+export { computeContentHash, extractTags, parseMarkdownToSections } from "./markdown.js";
 export type {
 	MemoryData,
 	SaveMemoryOptions,
@@ -35,6 +40,12 @@ export type {
 	SyncResult,
 	PullAgentFileOptions,
 	PullAgentFileResult,
+	Section,
+	HistoryEntry,
+	IndexEntry,
+	MemoryIndex,
+	SearchMemorizeOptions,
+	SearchMemorizeResult,
 } from "./types.js";
 
 /**
@@ -49,11 +60,14 @@ export async function saveMemory(
 ): Promise<SaveResult> {
 	const config = getConfig();
 	const timestamp = options.timestamp || new Date().toISOString();
+	// Compute hash once so both local and cloud layers can reuse it
+	const contentHash = options.contentHash || computeContentHash(options.content);
 
 	const enrichedOptions: SaveMemoryOptions = {
 		...options,
 		timestamp,
 		createdFrom: options.createdFrom || config.createdFrom,
+		contentHash,
 	};
 
 	console.log(
